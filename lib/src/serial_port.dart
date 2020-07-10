@@ -10,6 +10,9 @@ class SerialPort {
   final StreamController<MethodCall> _methodStreamController =
       new StreamController.broadcast();
 
+  Stream<MethodCall> get methodStream => _methodStreamController
+      .stream; // Used internally to dispatch methods from platform.
+
   SerialPort(MethodChannel channel, EventChannel eventChannel, Device device,
       int baudrate) {
     this.device = device;
@@ -20,7 +23,7 @@ class SerialPort {
 
     this._channel.setMethodCallHandler((MethodCall call) {
       print('call.method ${call.method}');
-      print('call.method ${call.arguments}');
+      print('call.arguments ${call.arguments}');
       _methodStreamController.add(call);
       return;
     });

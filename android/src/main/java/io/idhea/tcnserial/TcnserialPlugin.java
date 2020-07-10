@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.File;
+import java.io.UnsupportedEncodingException;
 import java.lang.Thread;
 import java.lang.Runnable;
 import java.util.Arrays;
@@ -246,8 +247,10 @@ public class TcnserialPlugin implements FlutterPlugin, ActivityAware, MethodCall
     }
   }
 
-  protected void onDataReceived(final byte[] buffer, final int size) {
-    invokeMethodUIThread("dataSerial", buffer.toString());
+  protected void onDataReceived(final byte[] buffer, final int size) throws UnsupportedEncodingException {
+    String msgDecode  = new String(buffer, "UTF-8");
+
+    invokeMethodUIThread("dataSerial", msgDecode);
 
 //    if (mEventSink != null) {
 //      mHandler.post(new Runnable() {
