@@ -1,4 +1,4 @@
-# tcnserial_example
+# tcnserial_rtec_example
 
 Demonstrates how to use the tcnserial plugin.
 
