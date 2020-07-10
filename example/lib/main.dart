@@ -51,19 +51,13 @@ class _MyAppState extends State<MyApp> {
                           });
 
                           _serialPort.dataSerial.listen((recv) {
-                            List<String> recvData = _formatReceivedData(recv);
-                            print('RECEBIDO e Transformado $recvData');
-                            _processReceivedData(recvData);
+                            if (recv != null) {
+                              List<String> recvData = _formatReceivedData(recv);
+                              print('RECEBIDO e Transformado $recvData');
+                              _processReceivedData(recvData);
+                            }
                           });
-
-                          // _subscription = _serialPort.receiveStream
-                          //     .transform(debounceTransformer)
-                          //     .listen((recv) {
-                          //   print("Receive: $recv");
-                          //   String recvData = _formatReceivedData(recv);
-                          //   print('RECEBIDO e Transformado $recvData');
-                          //   _processReceivedData(recvData);
-                          // });
+                          
                         }
                       },
                       child: Text('CONNECTAR'),
@@ -120,20 +114,18 @@ class _MyAppState extends State<MyApp> {
 
   void _requestShipment(String slot) async {
     _serialPort.getElevatorStatus();
-    await Future.delayed(Duration(milliseconds: 1000));
-    if (_isElevatorFault) {
-      final snackBar = SnackBar(
-        content: Text('Elevador em falta!'),
-      );
-      Scaffold.of(context).showSnackBar(snackBar);
-    } else {
-      _serialPort.shipment(slot);
-    }
+    await Future.delayed(Duration(milliseconds: 1000), () {
+      if (_isElevatorFault) {
+       print('Não podemos continuar com a retirada do produto, elevador em falta');
+      } else {
+        _serialPort.shipment(slot);
+      }
+    });
   }
 
   List<String> _formatReceivedData(recv) {
     RegExp rx = new RegExp(r".{1,2}(?=(.{2})+(?!.))|.{1,2}$");
-    return rx.allMatches(recv).map((m) => m.group(0));
+    return rx.allMatches(recv).map((m) => m.group(0)).toList();
   }
 
   String intToHex(int i) {
@@ -166,9 +158,8 @@ class _MyAppState extends State<MyApp> {
   }
 
   void _checkErrorCode(List<String> data) {
-    String err = data[5];
-    err = err.substring(0, err.length - 3);
-    if (err == '0') {
+    String err = data[5];    
+    if (err == '00') {
       print('NO ELEVATOR FAULT');
     } else {
       print('ELEVATOR FAULT - $err');
