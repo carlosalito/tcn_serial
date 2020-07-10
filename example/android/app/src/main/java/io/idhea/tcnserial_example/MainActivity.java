@@ -1,4 +1,4 @@
-package io.idhea.tcnserial_rtec_example;
+package io.idhea.tcnserial_example;
 
 import io.flutter.embedding.android.FlutterActivity;
 

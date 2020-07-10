@@ -1,7 +1,6 @@
 package io.idhea.tcnserial;
 
 import android.serialport.SerialPort;
-import android.serialport.SerialPortFinder;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
@@ -22,38 +21,51 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import io.flutter.embedding.engine.plugins.FlutterPlugin;
+import io.flutter.plugin.common.BinaryMessenger;
 import io.flutter.plugin.common.EventChannel;
 import io.flutter.plugin.common.MethodCall;
 import io.flutter.plugin.common.MethodChannel;
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler;
 import io.flutter.plugin.common.MethodChannel.Result;
+import io.flutter.plugin.common.PluginRegistry;
 import io.flutter.plugin.common.PluginRegistry.Registrar;
 
 /** TcnserialPlugin */
 public class TcnserialPlugin implements FlutterPlugin, MethodCallHandler, EventChannel.StreamHandler {
   private static final String TAG = "TCNSerial";
   private MethodChannel channel;
+  private EventChannel eventChannel;
+
   private EventChannel.EventSink mEventSink;
   protected OutputStream mOutputStream;
   private InputStream mInputStream;
   private ReadThread mReadThread;
   private Handler mHandler = new Handler(Looper.getMainLooper());
   protected SerialPort mSerialPort;
+  private FlutterPluginBinding pluginBinding;
+  private static TcnserialPlugin instance;
+  private static final String NAMESPACE = "tcnserial";
 
-  TcnserialPlugin(Registrar registrar) {
-    final EventChannel eventChannel = new EventChannel(registrar.messenger(), "tcnserial/event");
-    eventChannel.setStreamHandler(this);
+  public TcnserialPlugin() {
   }
 
   @Override
   public void onAttachedToEngine(@NonNull FlutterPluginBinding flutterPluginBinding) {
-    channel = new MethodChannel(flutterPluginBinding.getFlutterEngine().getDartExecutor(), "tcnserial");
-    channel.setMethodCallHandler(this);
+    pluginBinding = flutterPluginBinding;
   }
 
   public static void registerWith(Registrar registrar) {
-    final MethodChannel channel = new MethodChannel(registrar.messenger(), "tcnserial");
-    channel.setMethodCallHandler(new TcnserialPlugin(registrar));
+    if (instance == null) {
+      instance = new TcnserialPlugin();
+    }
+
+    instance.setup(registrar.messenger(), registrar);
+  }
+
+  private void setup(final BinaryMessenger messenger, final PluginRegistry.Registrar registrar) {
+    channel = new MethodChannel(messenger, NAMESPACE);
+    eventChannel = new EventChannel(messenger, NAMESPACE + "/event");
+    eventChannel.setStreamHandler(this);
   }
 
   @Override
@@ -162,7 +174,7 @@ public class TcnserialPlugin implements FlutterPlugin, MethodCallHandler, EventC
 
   @Override
   public void onDetachedFromEngine(@NonNull FlutterPluginBinding binding) {
-    channel.setMethodCallHandler(null);
+    pluginBinding = null;
   }
 
   private class ReadThread extends Thread {

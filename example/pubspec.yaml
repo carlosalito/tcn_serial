@@ -1,4 +1,4 @@
-name: tcnserial_rtec_example
+name: tcnserial_example
 description: Demonstrates how to use the tcnserial plugin.
 
 # The following line prevents the package from being accidentally published to
