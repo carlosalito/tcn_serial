@@ -21,6 +21,8 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import io.flutter.embedding.engine.plugins.FlutterPlugin;
+import io.flutter.embedding.engine.plugins.activity.ActivityAware;
+import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding;
 import io.flutter.plugin.common.BinaryMessenger;
 import io.flutter.plugin.common.EventChannel;
 import io.flutter.plugin.common.MethodCall;
@@ -29,9 +31,10 @@ import io.flutter.plugin.common.MethodChannel.MethodCallHandler;
 import io.flutter.plugin.common.MethodChannel.Result;
 import io.flutter.plugin.common.PluginRegistry;
 import io.flutter.plugin.common.PluginRegistry.Registrar;
+import io.flutter.plugin.common.PluginRegistry.RequestPermissionsResultListener;
 
 /** TcnserialPlugin */
-public class TcnserialPlugin implements FlutterPlugin, MethodCallHandler, EventChannel.StreamHandler {
+public class TcnserialPlugin implements FlutterPlugin, ActivityAware, MethodCallHandler, RequestPermissionsResultListener, EventChannel.StreamHandler {
   private static final String TAG = "TCNSerial";
   private MethodChannel channel;
   private EventChannel eventChannel;
@@ -44,7 +47,8 @@ public class TcnserialPlugin implements FlutterPlugin, MethodCallHandler, EventC
   protected SerialPort mSerialPort;
   private FlutterPluginBinding pluginBinding;
   private static TcnserialPlugin instance;
-  private static final String NAMESPACE = "tcnserial";
+  private static final String NAMESPACE = "io.idhea.tcnserial/tcnserial";
+  private ActivityPluginBinding activityBinding;
 
   public TcnserialPlugin() {
   }
@@ -62,14 +66,48 @@ public class TcnserialPlugin implements FlutterPlugin, MethodCallHandler, EventC
     instance.setup(registrar.messenger(), registrar);
   }
 
+  @Override
+  public void onAttachedToActivity(ActivityPluginBinding binding) {
+    activityBinding = binding;
+    setup(pluginBinding.getBinaryMessenger(), null);
+  }
+
+  @Override
+  public void onDetachedFromActivityForConfigChanges() {
+    onDetachedFromActivity();
+  }
+
+  @Override
+  public void onReattachedToActivityForConfigChanges(@NonNull ActivityPluginBinding binding) {
+    onAttachedToActivity(binding);
+  }
+
+  @Override
+  public void onDetachedFromActivity() {
+    tearDown();
+  }
+
+
   private void setup(final BinaryMessenger messenger, final PluginRegistry.Registrar registrar) {
-    channel = new MethodChannel(messenger, NAMESPACE);
-    eventChannel = new EventChannel(messenger, NAMESPACE + "/event");
-    eventChannel.setStreamHandler(this);
+      Log.i(TAG, "SETUP");
+      channel = new MethodChannel(messenger, NAMESPACE + "/methods");
+      channel.setMethodCallHandler(this);
+      eventChannel = new EventChannel(messenger, NAMESPACE + "/event");
+      eventChannel.setStreamHandler(this);
+      if (registrar != null) {
+        // V1 embedding setup for activity listeners.
+        registrar.addRequestPermissionsResultListener(this);
+      } else {
+        // V2 embedding setup for activity listeners.
+        activityBinding.addRequestPermissionsResultListener(this);
+      }
+
   }
 
   @Override
   public void onMethodCall(@NonNull MethodCall call, @NonNull Result result) {
+    Log.i(TAG, "onMethodCall " + call.method);
+
     switch (call.method) {
       case "getPlatformVersion":
         result.success("Android " + android.os.Build.VERSION.RELEASE);
@@ -177,6 +215,11 @@ public class TcnserialPlugin implements FlutterPlugin, MethodCallHandler, EventC
     pluginBinding = null;
   }
 
+  @Override
+  public boolean onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+    return false;
+  }
+
   private class ReadThread extends Thread {
     @Override
     public void run() {
@@ -220,6 +263,16 @@ public class TcnserialPlugin implements FlutterPlugin, MethodCallHandler, EventC
   @Override
   public void onCancel(Object o) {
     mEventSink = null;
+  }
+
+
+  private void tearDown() {
+    Log.i(TAG, "teardown");
+    activityBinding.removeRequestPermissionsResultListener(this);
+    activityBinding = null;
+    channel.setMethodCallHandler(null);
+    channel = null;
+    eventChannel.setStreamHandler(null);
   }
 
 }

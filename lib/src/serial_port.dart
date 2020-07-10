@@ -8,11 +8,12 @@ class SerialPort {
   int baudrate;
   bool _deviceConnected;
 
-  SerialPort(String methodChannelName, Device device, int baudrate) {
+  SerialPort(MethodChannel channel, EventChannel eventChannel, Device device,
+      int baudrate) {
     this.device = device;
     this.baudrate = baudrate;
-    this._channel = MethodChannel(methodChannelName);
-    this._eventChannel = EventChannel("$methodChannelName/event");
+    this._channel = channel;
+    this._eventChannel = eventChannel;
     this._deviceConnected = false;
   }
 
@@ -33,6 +34,7 @@ class SerialPort {
 
   /// Open device
   Future<bool> open() async {
+    print('channel $_channel');
     bool openResult = await _channel.invokeMethod(
         "open", {'devicePath': device.path, 'baudrate': baudrate});
 

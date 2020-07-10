@@ -1,6 +1,6 @@
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:tcnserial/src/tcnserial.dart';
+import 'package:tcnserial/tcnserial.dart';
 
 void main() {
   const MethodChannel channel = MethodChannel('tcnserial');
