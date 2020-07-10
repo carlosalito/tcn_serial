@@ -57,6 +57,8 @@ class _MyAppState extends State<MyApp> {
                             isPortOpened = openResult;
                           });
 
+                          
+
                           // _subscription = _serialPort.receiveStream
                           //     .transform(debounceTransformer)
                           //     .listen((recv) {

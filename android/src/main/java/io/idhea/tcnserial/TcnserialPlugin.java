@@ -249,6 +249,7 @@ public class TcnserialPlugin implements FlutterPlugin, ActivityAware, MethodCall
 
   protected void onDataReceived(final byte[] buffer, final int size) throws UnsupportedEncodingException {
     String msgDecode  = new String(buffer, "UTF-8");
+    Log.d(TAG, "onDataReceived: " + buffer.toString() + " - " + msgDecode);
 
     invokeMethodUIThread("dataSerial", msgDecode);
 
