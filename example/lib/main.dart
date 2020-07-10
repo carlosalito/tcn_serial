@@ -57,14 +57,14 @@ class _MyAppState extends State<MyApp> {
                             isPortOpened = openResult;
                           });
 
-                          _subscription = _serialPort.receiveStream
-                              .transform(debounceTransformer)
-                              .listen((recv) {
-                            print("Receive: $recv");
-                            String recvData = _formatReceivedData(recv);
-                            print('RECEBIDO e Transformado $recvData');
-                            _processReceivedData(recvData);
-                          });
+                          // _subscription = _serialPort.receiveStream
+                          //     .transform(debounceTransformer)
+                          //     .listen((recv) {
+                          //   print("Receive: $recv");
+                          //   String recvData = _formatReceivedData(recv);
+                          //   print('RECEBIDO e Transformado $recvData');
+                          //   _processReceivedData(recvData);
+                          // });
                         }
                       },
                       child: Text('CONNECTAR'),

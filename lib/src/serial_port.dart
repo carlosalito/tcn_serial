@@ -7,6 +7,8 @@ class SerialPort {
   Device device;
   int baudrate;
   bool _deviceConnected;
+  final StreamController<MethodCall> _methodStreamController =
+      new StreamController.broadcast();
 
   SerialPort(MethodChannel channel, EventChannel eventChannel, Device device,
       int baudrate) {
@@ -15,6 +17,13 @@ class SerialPort {
     this._channel = channel;
     this._eventChannel = eventChannel;
     this._deviceConnected = false;
+
+    this._channel.setMethodCallHandler((MethodCall call) {
+      print('call.method ${call.method}');
+      print('call.method ${call.arguments}');
+      _methodStreamController.add(call);
+      return;
+    });
   }
 
   bool get isConnected => _deviceConnected;
@@ -34,7 +43,6 @@ class SerialPort {
 
   /// Open device
   Future<bool> open() async {
-    print('channel $_channel');
     bool openResult = await _channel.invokeMethod(
         "open", {'devicePath': device.path, 'baudrate': baudrate});
 

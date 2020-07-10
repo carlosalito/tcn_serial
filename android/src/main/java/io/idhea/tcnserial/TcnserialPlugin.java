@@ -1,5 +1,6 @@
 package io.idhea.tcnserial;
 
+import android.app.Activity;
 import android.serialport.SerialPort;
 import android.util.Log;
 
@@ -49,6 +50,7 @@ public class TcnserialPlugin implements FlutterPlugin, ActivityAware, MethodCall
   private static TcnserialPlugin instance;
   private static final String NAMESPACE = "io.idhea.tcnserial/tcnserial";
   private ActivityPluginBinding activityBinding;
+  private Activity activity;
 
   public TcnserialPlugin() {
   }
@@ -62,14 +64,14 @@ public class TcnserialPlugin implements FlutterPlugin, ActivityAware, MethodCall
     if (instance == null) {
       instance = new TcnserialPlugin();
     }
-
-    instance.setup(registrar.messenger(), registrar);
+    Activity activity = registrar.activity();
+    instance.setup(registrar.messenger(), registrar, activity);
   }
 
   @Override
   public void onAttachedToActivity(ActivityPluginBinding binding) {
     activityBinding = binding;
-    setup(pluginBinding.getBinaryMessenger(), null);
+    setup(pluginBinding.getBinaryMessenger(), null, activityBinding.getActivity());
   }
 
   @Override
@@ -88,8 +90,9 @@ public class TcnserialPlugin implements FlutterPlugin, ActivityAware, MethodCall
   }
 
 
-  private void setup(final BinaryMessenger messenger, final PluginRegistry.Registrar registrar) {
+  private void setup(final BinaryMessenger messenger, final PluginRegistry.Registrar registrar, final Activity activity) {
       Log.i(TAG, "SETUP");
+      this.activity = activity;
       channel = new MethodChannel(messenger, NAMESPACE + "/methods");
       channel.setMethodCallHandler(this);
       eventChannel = new EventChannel(messenger, NAMESPACE + "/event");
@@ -244,15 +247,26 @@ public class TcnserialPlugin implements FlutterPlugin, ActivityAware, MethodCall
   }
 
   protected void onDataReceived(final byte[] buffer, final int size) {
-    if (mEventSink != null) {
-      mHandler.post(new Runnable() {
-        @Override
-        public void run() {
-          Log.d(TAG, "eventsink: " + buffer.toString());
-          mEventSink.success(Arrays.copyOfRange(buffer, 0, size));
-        }
-      });
-    }
+    invokeMethodUIThread("dataSerial", buffer.toString());
+
+//    if (mEventSink != null) {
+//      mHandler.post(new Runnable() {
+//        @Override
+//        public void run() {
+//          Log.d(TAG, "eventsink: " + buffer.toString());
+//          mEventSink.success(Arrays.copyOfRange(buffer, 0, size));
+//        }
+//      });
+//    }
+  }
+
+  private void invokeMethodUIThread(final String name, final String result) {
+    activity.runOnUiThread(new Runnable() {
+      @Override
+      public void run() {
+        channel.invokeMethod(name, result);
+      }
+    });
   }
 
   @Override
