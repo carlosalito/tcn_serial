@@ -7,11 +7,9 @@ class SerialPort {
   Device device;
   int baudrate;
   bool _deviceConnected;
-  final StreamController<MethodCall> _methodStreamController =
-      new StreamController.broadcast();
-
-  Stream<MethodCall> get methodStream => _methodStreamController
-      .stream; // Used internally to dispatch methods from platform.
+  
+  BehaviorSubject<String>
+  Stream<String> get dataSerial = new Stream.();
 
   SerialPort(MethodChannel channel, EventChannel eventChannel, Device device,
       int baudrate) {

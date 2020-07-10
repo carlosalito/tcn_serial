@@ -248,21 +248,29 @@ public class TcnserialPlugin implements FlutterPlugin, ActivityAware, MethodCall
   }
 
   protected void onDataReceived(final byte[] buffer, final int size) throws UnsupportedEncodingException {
-    String msgDecode  = new String(buffer, "UTF-8");
-    Log.d(TAG, "onDataReceived: " + buffer.toString() + " - " + msgDecode);
-
-    invokeMethodUIThread("dataSerial", msgDecode);
-
-//    if (mEventSink != null) {
-//      mHandler.post(new Runnable() {
-//        @Override
-//        public void run() {
-//          Log.d(TAG, "eventsink: " + buffer.toString());
-//          mEventSink.success(Arrays.copyOfRange(buffer, 0, size));
-//        }
-//      });
-//    }
+    Log.d(TAG, "HEX " + bytesToHex(Arrays.copyOfRange(buffer, 0, size)));
+    invokeMethodUIThread("dataSerial", bytesToHex(Arrays.copyOfRange(buffer, 0, size)));
   }
+
+   private final static char[] hexArray = "0123456789ABCDEF".toCharArray();
+    public static String bytesToHex(byte[] bytes) {
+        char[] hexChars = new char[bytes.length * 2];
+        for ( int j = 0; j < bytes.length; j++ ) {
+            int v = bytes[j] & 0xFF;
+            hexChars[j * 2] = hexArray[v >>> 4];
+            hexChars[j * 2 + 1] = hexArray[v & 0x0F];
+        }
+        return new String(hexChars);
+    }
+
+
+  public int convertByteToInt(byte[] b)
+{           
+    int value= 0;
+    for(int i=0; i<b.length; i++)
+       value = (value << 8) | b[i];     
+    return value;       
+}
 
   private void invokeMethodUIThread(final String name, final String result) {
     activity.runOnUiThread(new Runnable() {
