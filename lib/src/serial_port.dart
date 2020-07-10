@@ -3,13 +3,13 @@ part of tcn_serial;
 class SerialPort {
   MethodChannel _channel;
   EventChannel _eventChannel;
-  Stream _eventStream;
   Device device;
   int baudrate;
   bool _deviceConnected;
-  
-  BehaviorSubject<String>
-  Stream<String> get dataSerial = new Stream.();
+
+  BehaviorSubject<String> _dataSerialBS =
+      new BehaviorSubject<String>.seeded(null);
+  Stream<String> get dataSerial => _dataSerialBS.stream;
 
   SerialPort(MethodChannel channel, EventChannel eventChannel, Device device,
       int baudrate) {
@@ -22,20 +22,12 @@ class SerialPort {
     this._channel.setMethodCallHandler((MethodCall call) {
       print('call.method ${call.method}');
       print('call.arguments ${call.arguments}');
-      _methodStreamController.add(call);
+      _dataSerialBS.sink.add(call.arguments);
       return;
     });
   }
 
   bool get isConnected => _deviceConnected;
-
-  /// Stream(Event) coming from Android
-  Stream<Uint8List> get receiveStream {
-    _eventStream = _eventChannel
-        .receiveBroadcastStream()
-        .map<Uint8List>((dynamic value) => value);
-    return _eventStream;
-  }
 
   @override
   String toString() {
@@ -57,8 +49,8 @@ class SerialPort {
   /// Close device
   Future<bool> close() async {
     bool closeResult = await _channel.invokeMethod("close");
-
     if (closeResult) {
+      _dataSerialBS.close();
       _deviceConnected = false;
     }
 

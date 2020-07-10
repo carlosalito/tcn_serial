@@ -248,6 +248,7 @@ public class TcnserialPlugin implements FlutterPlugin, ActivityAware, MethodCall
   }
 
   protected void onDataReceived(final byte[] buffer, final int size) throws UnsupportedEncodingException {
+<<<<<<< HEAD
     Log.d(TAG, "HEX " + bytesToHex(Arrays.copyOfRange(buffer, 0, size)));
     invokeMethodUIThread("dataSerial", bytesToHex(Arrays.copyOfRange(buffer, 0, size)));
   }
@@ -271,6 +272,25 @@ public class TcnserialPlugin implements FlutterPlugin, ActivityAware, MethodCall
        value = (value << 8) | b[i];     
     return value;       
 }
+=======
+    String msgDecode  = new String(buffer, "ISO-8859-1");
+    Log.d(TAG, "onDataReceived: " + buffer.toString() + " - " + msgDecode);
+
+    invokeMethodUIThread("dataSerial", msgDecode);
+
+//    if (mEventSink != null) {
+//      mHandler.post(new Runnable() {
+//        @Override
+//        public void run() {
+//          Log.d(TAG, "eventsink: " + buffer.toString());
+//          mEventSink.success(Arrays.copyOfRange(buffer, 0, size));
+//        }
+//      });
+//    }
+  }
+
+  
+>>>>>>> adjust receive data
 
   private void invokeMethodUIThread(final String name, final String result) {
     activity.runOnUiThread(new Runnable() {

@@ -5,6 +5,7 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:flutter/services.dart';
+import 'package:rxdart/rxdart.dart';
 
 part 'src/constants.dart';
 part 'src/serial_port.dart';

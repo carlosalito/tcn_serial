@@ -1,8 +1,6 @@
 import 'dart:async';
-import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
-import 'package:stream_transform/stream_transform.dart';
 import 'package:tcnserial/tcnserial.dart';
 
 void main() {
@@ -44,11 +42,6 @@ class _MyAppState extends State<MyApp> {
                     child: InkWell(
                       onTap: () async {
                         if (!isPortOpened) {
-                          final debounceTransformer =
-                              StreamTransformer<Uint8List, dynamic>.fromBind(
-                                  (s) => s.debounceBuffer(
-                                      (const Duration(milliseconds: 500))));
-
                           final serialPort = await Tcnserial.createSerialPort(
                               device, baudrate);
                           bool openResult = await serialPort.open();
@@ -57,7 +50,11 @@ class _MyAppState extends State<MyApp> {
                             isPortOpened = openResult;
                           });
 
-                          
+                          _serialPort.dataSerial.listen((recv) {
+                            List<String> recvData = _formatReceivedData(recv);
+                            print('RECEBIDO e Transformado $recvData');
+                            _processReceivedData(recvData);
+                          });
 
                           // _subscription = _serialPort.receiveStream
                           //     .transform(debounceTransformer)
@@ -134,33 +131,33 @@ class _MyAppState extends State<MyApp> {
     }
   }
 
-  String _formatReceivedData(recv) {
-    return recv
-        .map((List<int> char) => char.map((c) => intToHex(c)).join())
-        .join();
+  List<String> _formatReceivedData(recv) {
+    RegExp rx = new RegExp(r".{1,2}(?=(.{2})+(?!.))|.{1,2}$");
+    return rx.allMatches(recv).map((m) => m.group(0));
   }
 
   String intToHex(int i) {
     return i.toRadixString(16).toUpperCase();
   }
 
-  void _processReceivedData(String data) {
+  void _processReceivedData(List<String> data) {
     //elevator process
-    if (data.startsWith('2510')) {
-      final indexElevatorStatus = int.parse(data.substring(4, 5));
+    final String dataString = data.join('');
+
+    if (dataString.startsWith('02050100')) {
       final ElevatorStatus elevatorStatus =
-          ElevatorStatus.values[indexElevatorStatus];
+          ElevatorStatus.values[int.parse(data[4])];
       print('STATUS DO ELEVADOR - $elevatorStatus');
       _checkErrorCode(data);
       //shipment process
-    } else if (data.startsWith('2520')) {
-      final String errCode = data.substring(5, 6);
+    } else if (dataString.startsWith('02050200')) {
+      final String errCode = data[5];
       if (errCode == '0') {
         print('SUCCESS REQUEST SHIPMENT');
       } else {
         print('ERR REQUEST SHIPMENT - $errCode');
       }
-    } else if (data.startsWith('2550')) {
+    } else if (dataString.startsWith('020550')) {
       print('CLEAR ELEVATOR FAULT');
       setState(() {
         _isElevatorFault = false;
@@ -168,8 +165,8 @@ class _MyAppState extends State<MyApp> {
     }
   }
 
-  void _checkErrorCode(String data) {
-    String err = data.substring(5);
+  void _checkErrorCode(List<String> data) {
+    String err = data[5];
     err = err.substring(0, err.length - 3);
     if (err == '0') {
       print('NO ELEVATOR FAULT');
