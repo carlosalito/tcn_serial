@@ -17,6 +17,7 @@ class _MyAppState extends State<MyApp> {
   bool isPortOpened = false;
   StreamSubscription _subscription;
   bool _isElevatorFault = false;
+  ElevatorStatus _elevatorStatus = ElevatorStatus.idle;
 
   final baudrate = 9600;
   final Device device = Device('TCN', '/dev/ttyS1');
@@ -60,7 +61,7 @@ class _MyAppState extends State<MyApp> {
                           
                         }
                       },
-                      child: Text('CONNECTAR'),
+                      child: Text('CONNECTAR', style: TextStyle(fontSize: 25)),
                     ),
                   ),
                   SizedBox(
@@ -96,6 +97,19 @@ class _MyAppState extends State<MyApp> {
                   ),
                 ),
               ),
+              SizedBox(height: 50),
+              Material(
+                child: InkWell(
+                  onTap: () async {
+                    _requestShipment('4');
+                  },
+                  child: Text(
+                    'SLOT 04',
+                    style: TextStyle(fontSize: 25),
+                  ),
+                ),
+              ),
+              SizedBox(height: 50),
               Material(
                 child: InkWell(
                   onTap: () async {
@@ -107,16 +121,36 @@ class _MyAppState extends State<MyApp> {
                   ),
                 ),
               ),
+              SizedBox(height: 50),
+              Material(
+                child: InkWell(
+                  onTap: () async {
+                    _clearFault();
+                  },
+                  child: Text(
+                    'LIMPAR FALTA',
+                    style: TextStyle(fontSize: 25),
+                  ),
+                ),
+              ),
             ],
           )),
     );
   }
 
+  void _clearFault() async {
+    _serialPort.clearElevatorFault();
+    await Future.delayed(Duration(milliseconds: 1000), () {
+      // _serialPort.getElevatorStatus();
+    });
+  }
+
   void _requestShipment(String slot) async {
     _serialPort.getElevatorStatus();
     await Future.delayed(Duration(milliseconds: 1000), () {
-      if (_isElevatorFault) {
-       print('Não podemos continuar com a retirada do produto, elevador em falta');
+      if (_isElevatorFault || _elevatorStatus != ElevatorStatus.idle) {        
+       print(_isElevatorFault ? 'Não podemos continuar com a retirada do produto, elevador em falta' :
+       'Elevador trabalhando...');
       } else {
         _serialPort.shipment(slot);
       }
@@ -139,6 +173,10 @@ class _MyAppState extends State<MyApp> {
     if (dataString.startsWith('02050100')) {
       final ElevatorStatus elevatorStatus =
           ElevatorStatus.values[int.parse(data[4])];
+
+      setState(() {
+        _elevatorStatus = elevatorStatus;
+      });
       print('STATUS DO ELEVADOR - $elevatorStatus');
       _checkErrorCode(data);
       //shipment process

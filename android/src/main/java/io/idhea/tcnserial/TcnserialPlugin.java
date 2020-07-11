@@ -108,7 +108,7 @@ public class TcnserialPlugin implements FlutterPlugin, ActivityAware, MethodCall
 
   @Override
   public void onMethodCall(@NonNull MethodCall call, @NonNull Result result) {
-
+    Log.i(TAG, call.method);
     switch (call.method) {
       case "getPlatformVersion":
         result.success("Android " + android.os.Build.VERSION.RELEASE);
@@ -126,6 +126,7 @@ public class TcnserialPlugin implements FlutterPlugin, ActivityAware, MethodCall
       case "tcnCommand":
         try {
           JSONObject obj = new JSONObject((String) call.arguments());
+          Log.i(TAG, obj.toString());
           processTCNCommand(obj);
           result.success(true);
         } catch (JSONException e) {
@@ -161,8 +162,10 @@ public class TcnserialPlugin implements FlutterPlugin, ActivityAware, MethodCall
           mOutputStream.write(bytesToSend, 0, 10);
           break;
         case "clearElevatorFault":
-          bytesToSend = new byte[]{0x02, 0x03, 0x50, 0x00, 0x00, 0x03, 0x05};
+
+          bytesToSend = new byte[]{0x02, 0x03, 0x50, 0x00, 0x00, 0x03, (byte)82};
           mOutputStream.write(bytesToSend, 0, 7);
+
           break;
         case "backElevatorToOrigin":
           bytesToSend = new byte[]{0x02, 0x03, 0x05,0x00, 0x00, 0x03, 0x05};
@@ -241,6 +244,7 @@ public class TcnserialPlugin implements FlutterPlugin, ActivityAware, MethodCall
   }
 
   protected void onDataReceived(final byte[] buffer, final int size) throws UnsupportedEncodingException {
+    Log.i(TAG, bytesToHex(Arrays.copyOfRange(buffer, 0, size)));
     invokeMethodUIThread("dataSerial", bytesToHex(Arrays.copyOfRange(buffer, 0, size)));
   }
 
