@@ -92,7 +92,6 @@ public class TcnserialPlugin implements FlutterPlugin, ActivityAware, MethodCall
 
 
   private void setup(final BinaryMessenger messenger, final PluginRegistry.Registrar registrar, final Activity activity) {
-      Log.i(TAG, "SETUP");
       this.activity = activity;
       channel = new MethodChannel(messenger, NAMESPACE + "/methods");
       channel.setMethodCallHandler(this);
@@ -105,12 +104,10 @@ public class TcnserialPlugin implements FlutterPlugin, ActivityAware, MethodCall
         // V2 embedding setup for activity listeners.
         activityBinding.addRequestPermissionsResultListener(this);
       }
-
   }
 
   @Override
   public void onMethodCall(@NonNull MethodCall call, @NonNull Result result) {
-    Log.i(TAG, "onMethodCall " + call.method);
 
     switch (call.method) {
       case "getPlatformVersion":
@@ -119,7 +116,6 @@ public class TcnserialPlugin implements FlutterPlugin, ActivityAware, MethodCall
       case "open":
         final String devicePath = call.argument("devicePath");
         final int baudrate = call.argument("baudrate");
-        Log.d(TAG, "Open " + devicePath + ", baudrate: " + baudrate);
         Boolean openResult = openDevice(devicePath, baudrate);
         result.success(openResult);
         break;
@@ -129,9 +125,7 @@ public class TcnserialPlugin implements FlutterPlugin, ActivityAware, MethodCall
         break;
       case "tcnCommand":
         try {
-          Log.d(TAG, "call.arguments() " + call.arguments() );
           JSONObject obj = new JSONObject((String) call.arguments());
-          Log.d(TAG, "obj " + obj );
           processTCNCommand(obj);
           result.success(true);
         } catch (JSONException e) {
@@ -235,7 +229,6 @@ public class TcnserialPlugin implements FlutterPlugin, ActivityAware, MethodCall
           if (mInputStream == null)
             return;
           size = mInputStream.read(buffer);
-          Log.d(TAG, "read size: " + String.valueOf(size));
           if (size > 0) {
             onDataReceived(buffer, size);
           }
@@ -248,29 +241,19 @@ public class TcnserialPlugin implements FlutterPlugin, ActivityAware, MethodCall
   }
 
   protected void onDataReceived(final byte[] buffer, final int size) throws UnsupportedEncodingException {
-    Log.d(TAG, "HEX " + bytesToHex(Arrays.copyOfRange(buffer, 0, size)));
     invokeMethodUIThread("dataSerial", bytesToHex(Arrays.copyOfRange(buffer, 0, size)));
   }
 
-   private final static char[] hexArray = "0123456789ABCDEF".toCharArray();
-    public static String bytesToHex(byte[] bytes) {
-        char[] hexChars = new char[bytes.length * 2];
-        for ( int j = 0; j < bytes.length; j++ ) {
-            int v = bytes[j] & 0xFF;
-            hexChars[j * 2] = hexArray[v >>> 4];
-            hexChars[j * 2 + 1] = hexArray[v & 0x0F];
-        }
-        return new String(hexChars);
-    }
-
-
-  public int convertByteToInt(byte[] b)
-{           
-    int value= 0;
-    for(int i=0; i<b.length; i++)
-       value = (value << 8) | b[i];     
-    return value;       
-}
+  private final static char[] hexArray = "0123456789ABCDEF".toCharArray();
+  public static String bytesToHex(byte[] bytes) {
+      char[] hexChars = new char[bytes.length * 2];
+      for ( int j = 0; j < bytes.length; j++ ) {
+          int v = bytes[j] & 0xFF;
+          hexChars[j * 2] = hexArray[v >>> 4];
+          hexChars[j * 2 + 1] = hexArray[v & 0x0F];
+      }
+      return new String(hexChars);
+  }
 
   private void invokeMethodUIThread(final String name, final String result) {
     activity.runOnUiThread(new Runnable() {
@@ -290,7 +273,6 @@ public class TcnserialPlugin implements FlutterPlugin, ActivityAware, MethodCall
   public void onCancel(Object o) {
     mEventSink = null;
   }
-
 
   private void tearDown() {
     Log.i(TAG, "teardown");
